@@ -29,20 +29,3 @@ with col2:
  st.write("- درايفود (Dry Food) متميز")
  st.write("- أطواقوسلاسلمتينة")
  st.write("- أدواتالعنايةبالشعر (فرش)")
-
- elif page == "تواصلمعنا":
-   st.title("📞اطلبالآن")
-   st.write("نحنمتواجدونلخدمتكمفيمنطقةمحرمبكوكرموز.")
-
-with st.form("contact_form"):
- name = st.text_input("الاسم:")
- order = st.text_area("المنتجاتالمطلوبة:")
- phone = st.text_input("رقمالهاتف:")
- submit = st.form_submit_button("إرسالالطلب")
-
-if submit:
-    st.success(f"شكراًيا {name}،تماستلامطلبكوسنتواصلمعكفوراً!")
-
-# تذييلالصفحة
-    st.sidebar.write("---")
-    st.sidebar.write("📍الإسكندرية - محرمبك / كرموز")
