@@ -1,45 +1,48 @@
-importstreamlitas st
-importpandasas pd
+import streamlit as st
 
-# إعداد الصفحة
-st.set_page_config(page_title="VetSmart Pro | الرعاية الذكية", page_icon="🐾", layout="wide")
+# إعداداتالصفحة
+st.set_page_config(page_title="العنايةالذكيةبالحيواناتالأليفة", page_icon="🐾")
 
-# --- التنسيق البصري ---
-st.markdown("""
-<style>
-    .main { background-color: #f8f9fa; }
-    .stButton>button { background-color: #2e7d32; color: white; border-radius: 8px; }
-    .price-box { padding: 15px; background-color: #e8f5e9; border-radius: 10px; border: 1px solid #2e7d32; }
-</style>
-    """, unsafe_allow_html=True)
+# القائمةالجانبيةللتنقل
+page = st.sidebar.selectbox("انتقلإلى:", ["الرئيسية", "قائمةالمنتجات", "تواصلمعنا"])
 
-# --- القائمة الجانبية (فريق العمل) ---
-with st.sidebar:
-    st.header("🩺 فريق VetSmart")
-    st.info("نخبة من الأطباء البيطريين ومهندسي سلامة الغذاء لخدمة أليفك.")
-    st.divider()
-    st.write("📍 الرياض، المملكة العربية السعودية")
+if page == "الرئيسية":
+st.title("🐾مرحباًبكفيمشروعالعنايةالذكية")
+st.subheader("نقدمأفضلالمستلزماتالطبيةوالغذائيةللحيواناتالأليفةفيالإسكندرية")
+st.write("هدفناهوتوفيرمتطلباتأصحابالعياداتوالمربينبأفضلجودةوأسرعخدمةتوصيل.")
+st.image("https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60", caption="خدمتكمهيغايتنا")
 
-# --- العنوان الرئيسي ---
-st.title("🐾 منصة VetSmart Pro للرعاية المتكاملة")
-st.subheader("إشراف طبي وهندسي عالمي المستوى")
+elif page == "قائمةالمنتجات":
+st.title("📦كتالوجالمنتجات")
+st.write("استكشفمجموعتناالمختارةمنالمستلزمات:")
 
-# --- أقسام الخدمات ---
-tabs = st.tabs(["🏥 الخدمات والعيادة", "🍱 التغذية الذكية", "🛍️ المتجر والمستلزمات", "💳 إتمام الطلب"])
-
-# القسم 1: الخدمات الطبية والإرشادات
-with tabs[0]:
 col1, col2 = st.columns(2)
-with col1:
-        st.markdown("### 🩺 استشارات وتطعيمات")
-        st.write("- استشارات طبية فورية.\n- جدول تطعيمات ذكي.\n- متابعة دورية للأدوية.")
-with col2:
-        st.markdown("### 📚 إرشادات بيطرية")
-        st.success("نصيحة الطبيب: تأكد من جدول التطعيمات الرباعي لقطتك في موعده.")
 
-# القسم 2: التغذية الذكية (إشراف مهندس سلامة الغذاء)
-with tabs[1]:
-    st.header("⚖️ حاسبة التغذية ومعايير السلامة")
-c1, c2 = st.columns(2)
-with c1:
-weight = st.number_input("وزن الأليف (كجم):", min_value=0.5, value=5.0)
+with col1:
+st.info("💊 **مستلزماتطبية**")
+st.write("- حقنطبيةمقاساتمختلفة")
+st.write("- مطهراتوشاشمعقم")
+st.write("- فيتاميناتومكملاتغذائية")
+
+with col2:
+st.success("🥣 **أغذيةواكسسوارات**")
+st.write("- درايفود (Dry Food) متميز")
+st.write("- أطواقوسلاسلمتينة")
+st.write("- أدواتالعنايةبالشعر (فرش)")
+
+elif page == "تواصلمعنا":
+st.title("📞اطلبالآن")
+st.write("نحنمتواجدونلخدمتكمفيمنطقةمحرمبكوكرموز.")
+
+with st.form("contact_form"):
+name = st.text_input("الاسم:")
+order = st.text_area("المنتجاتالمطلوبة:")
+phone = st.text_input("رقمالهاتف:")
+submit = st.form_submit_button("إرسالالطلب")
+
+if submit:
+st.success(f"شكراًيا {name}،تماستلامطلبكوسنتواصلمعكفوراً!")
+
+# تذييلالصفحة
+st.sidebar.write("---")
+st.sidebar.write("📍الإسكندرية - محرمبك / كرموز")
