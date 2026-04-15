@@ -4,107 +4,66 @@ from streamlit_gsheets import GSheetsConnection
 from datetime import datetime
 import pytz
 
-# 1. إعدادات الصفحة
+# إعداد الصفحة
 st.set_page_config(page_title="VetFamily Alexandria", page_icon="🐾", layout="wide")
 
-# 2. رابط جدول البيانات (تأكد من الصلاحية إلى Editor)
+# رابط الجدول (تأكد من ضبط الوصول إلى 'محرر')
 URL = "https://docs.google.com/spreadsheets/d/1kQ1junWnmyfwKPYj-Jm2QeCLlJ4dwmiMXkystV8dc7k/edit?usp=sharing"
 
-# 3. الربط بجوجل شيت
+# الاتصال بجوجل شيت
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def save_order(name, phone, product):
     try:
-        # قراءة البيانات الحالية
         existing_data = conn.read(spreadsheet=URL)
-        # سطر البيانات الجديد
         new_row = pd.DataFrame([{
             "التاريخ": datetime.now(pytz.timezone('Africa/Cairo')).strftime("%Y-%m-%d %H:%M"),
             "اسم العميل": name,
             "المنتج": product,
             "رقم الهاتف": phone
         }])
-        # التحديث
         updated_df = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(spreadsheet=URL, data=updated_df)
         return True
-    except:
+    except Exception as e:
+        st.error(f"خطأ في الحفظ: {e}")
         return False
 
-# 4. التنسيق المرئي
+# التنسيق
 st.markdown("""
 <style>
-    .main-header { background: #1e3c72; padding: 20px; color: white; text-align: center; border-radius: 15px; }
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; margin-top: 15px; }
-    .price { color: #28a745; font-size: 22px; font-weight: bold; }
+    .header { background-color: #1e3c72; padding: 20px; color: white; text-align: center; border-radius: 10px; }
+    .product-card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #dee2e6; text-align: center; margin-bottom: 15px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-header"><h1>🐾 VetFamily Alexandria</h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="header"><h1>🐾 VetFamily Alexandria</h1></div>', unsafe_allow_html=True)
 
-# 5. قائمة المنتجات (مكتوبة بشكل سليم لتجنب خطأ السطر 70)
-products = [
-    {"id": 1, "name": "رويال كانين قطط 2 كجم", "price": "450 ج.م"},
-    {"id": 2, "name": "رمل قطط كربون 5 لتر", "price": "180 ج.م"}
-]
+# عرض المنتجات
+st.write("### 🛒 المنتجات المتاحة")
+col1, col2 = st.columns(2)
 
-st.write("### 🛒 العروض المتاحة")
-for p in products:
-    with st.container():
-        st.markdown(f'<div class="card"><h3>{p["name"]}</h3><p class="price">{p["price"]}</p></div>', unsafe_allow_html=True)
-        with st.expander(f"📝 اطلب {p['name']} الآن"):
-            user_name = st.text_input("الاسم بالكامل", key=f"name_{p['id']}")
-            user_phone = st.text_input("رقم الموبايل", key=f"phone_{p['id']}")
-            if st.button("تأكيد وحفظ الطلب", key=f"btn_{p['id']}"):
-                if user_name and user_phone:
-                    if save_order(user_name, user_phone, p['name']):
-                        st.success("✅ تم حفظ طلبك! سيتم التواصل معك.")
-                        st.balloons()
-                    else:
-                        st.error("❌ فشل في الحفظ. تأكد من صلاحيات الجدول.")
-                else:
-                    st.warning("برجاء إدخال البيانات كاملة")
+with col1:
+    st.markdown('<div class="product-card"><h3>رويال كانين قطط 2 كجم</h3><p>450 ج.م</p></div>', unsafe_allow_html=True)
+    with st.expander("📝 اطلب الآن"):
+        name1 = st.text_input("الاسم", key="n1")
+        phone1 = st.text_input("الموبايل", key="p1")
+        if st.button("تأكيد الطلب", key="b1"):
+            if name1 and phone1:
+                if save_order(name1, phone1, "رويال كانين قطط"):
+                    st.success("✅ تم تسجيل طلبك!")
+            else:
+                st.warning("يرجى إكمال البيانات")
 
-st.markdown("---")
-st.caption("VetFamily Alexandria © 2026")
-    }
-
-if "packages" not in st.session_state:
-    st.session_state.packages = {
-        "الباقة البرونزية": {
-            "price":200,"duration":"شهرياً","desc":"باقة أساسية للرعاية الشهرية",
-            "icon":"🥉","color":"#CD7F32",
-            "features":["استشارتان هاتفيتان","استشارة واتساب","خصم 10% على الأدوية"]
-        },
-        "الباقة الفضية": {
-            "price":400,"duration":"شهرياً","desc":"رعاية متقدمة مع فحوصات دورية",
-            "icon":"🥈","color":"#C0C0C0",
-            "features":["4 استشارات","فحص شامل مجاني","خصم 20% على المنتجات"]
-        },
-        "الباقة الذهبية": {
-            "price":700,"duration":"شهرياً","desc":"رعاية VIP شاملة",
-            "icon":"🥇","color":"#FFD700",
-            "features":["استشارات غير محدودة","زيارة منزلية","خصم 30% على المنتجات"]
-        },
-        "الباقة الماسية": {
-            "price":1200,"duration":"شهرياً","desc":"الأشمل - رعاية ملكية",
-            "icon":"💎","color":"#B9F2FF",
-            "features":["كل مميزات الذهبية","زيارتان منزليتان","خصم 40% على كل شيء"]
-        },
-    }
-
-# =============================================
-# بطاقة المنتج (بدون سلة - فقط واتساب)
-# =============================================
-def display_product_card(product):
-    if product["stock"] > 10:
-        sc, st_txt = "in-stock",  f"✅ متوفر ({product['stock']})"
-    elif product["stock"] > 0:
-        sc, st_txt = "low-stock", f"⚠️ محدود ({product['stock']})"
-    else:
-        sc, st_txt = "out-stock", "❌ نفذ المخزون"
-
-    st.markdown(f"""
+with col2:
+    st.markdown('<div class="product-card"><h3>رمل قطط كربون 5 لتر</h3><p>180 ج.م</p></div>', unsafe_allow_html=True)
+    with st.expander("📝 اطلب الآن"):
+        name2 = st.text_input("الاسم", key="n2")
+        phone2 = st.text_input("الموبايل", key="p2")
+        if st.button("تأكيد الطلب", key="b2"):
+            if name2 and phone2:
+                if save_order(name2, phone2, "رمل كربون"):
+                    st.success("✅ تم تسجيل طلبك!")
     <div class="product-card">
         <div class="product-image">{product['icon']}</div>
         <div class="product-name">{product['name']}</div>
