@@ -1,110 +1,82 @@
 import streamlit as st
-import json
+import pandas as pd
+from streamlit_gsheets import GSheetsConnection
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import hashlib
 import urllib.parse
 
 # =============================================
-# قاعدة البيانات المحلية
+# إعدادات الربط بجوجل شيت (الرابط الخاص بك)
 # =============================================
-DB_FILE = "vetfamily_database.json"
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1kQ1junWnmyfwKPYj-Jm2QeCLlJ4dwmiMXkystV8dc7k/edit?usp=sharing"
 
-def load_db():
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            pass
-    return {"orders": [], "subscriptions": [], "adoption": []}
+# إنشاء اتصال بالقاعدة
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-def save_db():
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(st.session_state.db, f, ensure_ascii=False, indent=2)
-
-if "db" not in st.session_state:
-    st.session_state.db = load_db()
+def save_to_google_sheets(client_name, product_name, phone):
+    try:
+        # قراءة البيانات الحالية
+        existing_data = conn.read(spreadsheet=GOOGLE_SHEET_URL)
+        # تجهيز السطر الجديد
+        new_row = pd.DataFrame([{
+            "التاريخ": datetime.now(pytz.timezone('Africa/Cairo')).strftime("%Y-%m-%d %H:%M"),
+            "اسم العميل": client_name,
+            "المنتج": product_name,
+            "رقم الهاتف": phone
+        }])
+        # دمج وتحديث
+        updated_df = pd.concat([existing_data, new_row], ignore_index=True)
+        conn.update(spreadsheet=GOOGLE_SHEET_URL, data=updated_df)
+        return True
+    except Exception as e:
+        st.error(f"خطأ في الحفظ: {e}")
+        return False
 
 # =============================================
-# إعدادات الصفحة
+# إعدادات الصفحة والتنسيق (CSS)
 # =============================================
-st.set_page_config(
-    page_title="VetFamily Alexandria - مركز الرعاية البيطرية",
-    page_icon="🐾",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="VetFamily Alexandria", page_icon="🐾", layout="wide")
 
+# (ضع هنا استايل الـ CSS الموجود في كودك القديم ليبدو الموقع كما هو)
 st.markdown("""
 <style>
-    [data-testid="stSidebar"]        { display: none !important; }
-    [data-testid="collapsedControl"] { display: none !important; }
-    .block-container {
-        max-width: 100% !important;
-        padding: 1rem 1.5rem !important;
-        direction: rtl !important;
-    }
-    * { box-sizing: border-box; }
-    body, .stMarkdown, [data-testid="stAppViewContainer"] {
-        direction: rtl !important;
-        text-align: right !important;
-    }
+    .main-header { background: linear-gradient(135deg,#1e3c72,#2a5298); padding: 30px; border-radius: 20px; color: white; text-align: center; }
+    .product-card { background: white; border-radius: 18px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; margin-bottom: 10px; }
+    .wa-btn { background: #25d366; color: white !important; padding: 10px; border-radius: 10px; text-decoration: none; display: block; font-weight: bold; }
+</style>
+""", unsafe_allow_html=True)
 
-    /* ===== هيدر ===== */
-    .main-header {
-        background: linear-gradient(135deg,#1e3c72,#2a5298);
-        padding: 30px 20px; border-radius: 20px;
-        color: white; text-align: center; margin-bottom: 20px;
-    }
-    .main-header h1 {
-        font-size: clamp(1.8rem,5vw,3rem) !important;
-        color: white !important; font-weight: 900 !important; margin: 0 !important;
-    }
-    .main-header p {
-        color: rgba(255,255,255,0.9) !important; margin: 8px 0 0 !important;
-    }
+st.markdown('<div class="main-header"><h1>🐾 VetFamily Alexandria 🐾</h1><p>قاعدة بيانات العملاء المتصلة</p></div>', unsafe_allow_html=True)
 
-    /* ===== بطاقة المنتج ===== */
-    .product-card {
-        background: white; border-radius: 18px; padding: 20px;
-        margin: 10px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0; text-align: center;
-        transition: transform 0.2s ease;
-    }
-    .product-card:hover { transform: translateY(-3px); }
-    .product-image { font-size: 3.5rem !important; margin: 5px 0 !important; }
-    .product-name  {
-        font-size: 1.5rem !important; font-weight: 900 !important;
-        color: #1e3c72 !important; margin: 10px 0 8px !important; line-height: 1.3 !important;
-    }
-    .product-description {
-        font-size: 0.9rem !important; color: #718096 !important;
-        font-weight: 500 !important; margin: 6px 0 !important;
-    }
-    .product-price {
-        font-size: 1.5rem !important; font-weight: 900 !important;
-        color: #28a745 !important; margin: 10px 0 !important;
-    }
-    .product-badge {
-        display: inline-block; padding: 3px 12px; border-radius: 20px;
-        font-size: 0.75rem; font-weight: 700; margin: 2px; color: white;
-    }
-    .badge-new         { background: linear-gradient(135deg,#11998e,#38ef7d); }
-    .badge-sale        { background: linear-gradient(135deg,#ff416c,#ff4b2b); }
-    .badge-popular     { background: linear-gradient(135deg,#667eea,#764ba2); }
-    .badge-premium     { background: linear-gradient(135deg,#f093fb,#f5576c); }
-    .badge-recommended { background: linear-gradient(135deg,#4facfe,#00f2fe); }
-    .badge-vet         { background: linear-gradient(135deg,#43e97b,#38f9d7); }
+# =============================================
+# عرض المنتجات مع نموذج الحفظ
+# =============================================
+# ملاحظة: يمكنك وضع قائمة منتجاتك هنا. سأضع مثالاً واحداً للتجربة:
+products = [
+    {"id": 1, "name": "رويال كانين قطط", "price": 450, "icon": "🐱", "desc": "طعام فرنسي فاخر"}
+]
 
-    .stock-badge {
-        padding: 5px 10px; border-radius: 8px; font-size: 0.8rem;
-        font-weight: 700; margin-top: 8px; display: inline-block;
-    }
-    .in-stock  { background:#d4edda; color:#155724; }
-    .low-stock { background:#fff3cd; color:#856404; }
-    .out-stock { background:#f8d7da; color:#721c24; }
+for prod in products:
+    st.markdown(f"""
+    <div class="product-card">
+        <div style="font-size:3rem;">{prod['icon']}</div>
+        <h3>{prod['name']}</h3>
+        <p>{prod['desc']}</p>
+        <h2 style="color:#28a745;">{prod['price']} ج.م</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.expander("📝 اطلب الآن وسجل بياناتك"):
+        name = st.text_input("اسمك", key=f"n_{prod['id']}")
+        phone = st.text_input("رقم الهاتف", key=f"p_{prod['id']}")
+        if st.button("تأكيد الطلب والحفظ", key=f"b_{prod['id']}"):
+            if name and phone:
+                if save_to_google_sheets(name, prod['name'], phone):
+                    st.success("✅ تم حفظ بياناتك! اضغط على الواتساب للتواصل.")
+                    msg = f"مرحباً، طلبت {prod['name']} من الموقع."
+                    st.markdown(f'<a href="https://wa.me/201022395878?text={msg}" class="wa-btn">تواصل عبر واتساب الآن</a>', unsafe_allow_html=True)
 
     /* ===== زر الواتساب الرئيسي ===== */
     .wa-btn {
