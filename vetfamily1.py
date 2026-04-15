@@ -4,107 +4,69 @@ from streamlit_gsheets import GSheetsConnection
 from datetime import datetime
 import pytz
 
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة الأساسية
 st.set_page_config(page_title="VetFamily Alexandria", page_icon="🐾", layout="wide")
 
-# 2. رابط الجدول (تأكد من ضبط الصلاحية إلى 'محرر' Editor كما في الصورة 14134)
+# 2. رابط جدول البيانات (تأكد من ضبط الصلاحية لـ Editor)
 URL = "https://docs.google.com/spreadsheets/d/1kQ1junWnmyfwKPYj-Jm2QeCLlJ4dwmiMXkystV8dc7k/edit?usp=sharing"
 
-# 3. الاتصال بجوجل شيت
+# 3. الربط بجوجل شيت
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-def save_order(client_name, phone, product_name):
+def save_data(name, phone, product):
     try:
         existing_data = conn.read(spreadsheet=URL)
         new_row = pd.DataFrame([{
             "التاريخ": datetime.now(pytz.timezone('Africa/Cairo')).strftime("%Y-%m-%d %H:%M"),
-            "اسم العميل": client_name,
-            "المنتج": product_name,
+            "اسم العميل": name,
+            "المنتج": product,
             "رقم الهاتف": phone
         }])
         updated_df = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(spreadsheet=URL, data=updated_df)
         return True
-    except Exception as e:
-        st.error(f"خطأ في الاتصال بالجدول: {e}")
+    except:
         return False
 
-# 4. تنسيق الموقع (CSS مصحح)
+# 4. تصميم الواجهة
 st.markdown("""
 <style>
-    .header { background: #1e3c72; padding: 25px; color: white; text-align: center; border-radius: 15px; }
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; margin-top: 10px; }
-    .price { color: #28a745; font-size: 24px; font-weight: bold; }
+    .main-header { background: #1e3c72; padding: 25px; color: white; text-align: center; border-radius: 15px; margin-bottom: 20px; }
+    .product-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+    .price-tag { color: #28a745; font-size: 22px; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header"><h1>🐾 VetFamily Alexandria</h1><p>الرعاية المتكاملة لحيوانك الأليف</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header"><h1>🐾 VetFamily Alexandria</h1><p>الرعاية المتكاملة لحيوانك الأليف</p></div>', unsafe_allow_html=True)
 
-# 5. عرض المنتجات
+# 5. عرض العروض (كما في صورتك الأخيرة)
 st.write("### 🛒 العروض المتاحة")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown('<div class="card"><h3>رويال كانين قطط 2 كجم</h3><p class="price">450 ج.م</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="product-card"><h3>رويال كانين قطط 2 كجم</h3><p class="price-tag">ج.م 450</p></div>', unsafe_allow_html=True)
     with st.expander("📝 اطلب الآن"):
-        name = st.text_input("اسمك بالكامل", key="n1")
-        phone = st.text_input("رقم الموبايل", key="p1")
-        if st.button("تأكيد الطلب والحفظ", key="b1"):
-            if name and phone:
-                if save_order(name, phone, "رويال كانين قطط 2 كجم"):
-                    st.success("✅ تم تسجيل طلبك في الجدول بنجاح!")
-                    st.markdown(f'<a href="https://wa.me/201022395878?text=تم تسجيل طلب رويال كانين باسم {name}" style="display:block; background:#25d366; color:white; text-align:center; padding:10px; border-radius:10px; text-decoration:none;">تواصل عبر واتساب لإتمام الشحن</a>', unsafe_allow_html=True)
-            else:
-                st.warning("برجاء إدخال الاسم والرقم")
+        n1 = st.text_input("الاسم", key="u1")
+        p1 = st.text_input("رقم الموبايل", key="ph1")
+        if st.button("إرسال الطلب", key="btn1"):
+            if n1 and p1:
+                if save_data(n1, p1, "رويال كانين قطط 2 كجم"):
+                    st.success("✅ تم الحفظ في الجدول! سنقوم بالتواصل معك.")
+            else: st.warning("اكمل البيانات")
 
 with col2:
-    st.markdown('<div class="card"><h3>رمل قطط كربون 5 لتر</h3><p class="price">180 ج.م</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="product-card"><h3>رمل قطط كربون 5 لتر</h3><p class="price-tag">ج.م 180</p></div>', unsafe_allow_html=True)
     with st.expander("📝 اطلب الآن"):
-        name2 = st.text_input("اسمك بالكامل", key="n2")
-        phone2 = st.text_input("رقم الموبايل", key="p2")
-        if st.button("تأكيد الطلب والحفظ", key="b2"):
-            if name2 and phone2:
-                if save_order(name2, phone2, "رمل قطط كربون 5 لتر"):
-                    st.success("✅ تم حفظ البيانات!")
-            else:
-                st.warning("برجاء إدخال البيانات")
+        n2 = st.text_input("الاسم", key="u2")
+        p2 = st.text_input("رقم الموبايل", key="ph2")
+        if st.button("إرسال الطلب", key="btn2"):
+            if n2 and p2:
+                if save_data(n2, p2, "رمل قطط كربون 5 لتر"):
+                    st.success("✅ تم تسجيل طلبك!")
+            else: st.warning("اكمل البيانات")
 
 st.markdown("---")
-st.caption("حقوق النشر © 2026 - VetFamily Alexandria")
-
-# =============================================
-# حفظ طلبات التبني (للأرشيف فقط)
-# =============================================
-def save_adoption(info):
-    try:
-        ct = get_now()
-        req = {
-            "id":             len(st.session_state.db["adoption"]) + 1,
-            "date":           ct.strftime("%Y-%m-%d"),
-            "time":           ct.strftime("%H:%M:%S"),
-            "customer_name":  info["name"],
-            "customer_phone": info["phone"],
-            "customer_address": info.get("address", ""),
-            "pet_type":       info["pet_type"],
-            "pet_age":        info.get("pet_age", ""),
-            "home_type":      info.get("home_type", ""),
-            "experience":     info.get("experience", ""),
-            "notes":          info.get("notes", ""),
-            "status":         "تم التواصل عبر الواتساب"
-        }
-        st.session_state.db["adoption"].append(req)
-        save_db()
-        return True
-    except Exception as e:
-        st.error(f"خطأ: {e}")
-        return False
-
-# =============================================
-# بيانات المنتجات
-# =============================================
-if "products" not in st.session_state:
-    st.session_state.products = {
-        "طعام_القطط_الجاف": [
+st.caption("VetFamily Alexandria © 2026")
             {"id":1,"name":"رويال كانين - قطط بالغة 2 كجم","desc":"طعام متوازن للقطط البالغة من 1-7 سنوات","price":450,"cost":320,"icon":"🐱","stock":25,"unit":"كيس 2 كجم","brand":"Royal Canin","country":"فرنسا","features":["بروتين 32%","فيتامينات متكاملة","أوميجا 3 و 6"],"badges":["popular","premium"]},
             {"id":2,"name":"رويال كانين كيتن - قطط صغيرة 1.5 كجم","desc":"تركيبة للقطط الصغيرة من شهرين إلى 12 شهر","price":400,"cost":280,"icon":"🐈","stock":18,"unit":"كيس 1.5 كجم","brand":"Royal Canin","country":"فرنسا","features":["سهل الهضم","دعم المناعة","تقوية العظام"],"badges":["new","recommended"]},
             {"id":3,"name":"بريميوم كات - قطط 1 كجم","desc":"طعام محلي عالي الجودة بسعر اقتصادي","price":70,"cost":45,"icon":"🐱","stock":40,"unit":"كيس 1 كجم","brand":"Premium Cat","country":"مصر","features":["جودة جيدة","سعر مناسب","بروتين 28%"],"badges":["sale"]},
