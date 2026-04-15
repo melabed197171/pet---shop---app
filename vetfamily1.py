@@ -4,107 +4,73 @@ from streamlit_gsheets import GSheetsConnection
 from datetime import datetime
 import pytz
 
-# إعداد الصفحة وتصحيح الخطأ البرمجي في التنسيق
-st.set_page_config(page_title="VetFamily Alexandria", layout="wide")
+# 1. إعدادات الصفحة
+st.set_page_config(page_title="VetFamily Alexandria", page_icon="🐾", layout="wide")
 
-# رابط الجدول (تأكد أن صلاحية الرابط هي "محرر" Editor من جوجل شيت)
+# 2. رابط الجدول (تأكد من ضبط الصلاحية إلى 'محرر' Editor كما في الصورة 14134)
 URL = "https://docs.google.com/spreadsheets/d/1kQ1junWnmyfwKPYj-Jm2QeCLlJ4dwmiMXkystV8dc7k/edit?usp=sharing"
 
-# الاتصال بجوجل شيت
+# 3. الاتصال بجوجل شيت
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-def save_to_sheets(name, phone, product):
+def save_order(client_name, phone, product_name):
     try:
-        # قراءة البيانات الحالية
         existing_data = conn.read(spreadsheet=URL)
-        # إنشاء السطر الجديد
-        new_data = pd.DataFrame([{
+        new_row = pd.DataFrame([{
             "التاريخ": datetime.now(pytz.timezone('Africa/Cairo')).strftime("%Y-%m-%d %H:%M"),
-            "اسم العميل": name,
-            "المنتج": product,
+            "اسم العميل": client_name,
+            "المنتج": product_name,
             "رقم الهاتف": phone
         }])
-        # الدمج والتحديث
-        updated_df = pd.concat([existing_data, new_data], ignore_index=True)
+        updated_df = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(spreadsheet=URL, data=updated_df)
         return True
     except Exception as e:
-        st.error(f"حدث خطأ في الحفظ: {e}")
+        st.error(f"خطأ في الاتصال بالجدول: {e}")
         return False
 
-# تصميم الواجهة - تم إصلاح كود الـ CSS هنا
+# 4. تنسيق الموقع (CSS مصحح)
 st.markdown("""
 <style>
-    .header-box {
-        background: linear-gradient(135deg, #1e3c72, #2a5298);
-        padding: 30px; border-radius: 15px; color: white; text-align: center;
-    }
-    .card {
-        background: white; padding: 20px; border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
-    }
+    .header { background: #1e3c72; padding: 25px; color: white; text-align: center; border-radius: 15px; }
+    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; margin-top: 10px; }
+    .price { color: #28a745; font-size: 24px; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header-box"><h1>🐾 VetFamily Alexandria</h1><p>مركز الرعاية المتكاملة</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="header"><h1>🐾 VetFamily Alexandria</h1><p>الرعاية المتكاملة لحيوانك الأليف</p></div>', unsafe_allow_html=True)
 
-# عرض المنتجات (مثال)
-st.write("## 🛒 متجرنا")
+# 5. عرض المنتجات
+st.write("### 🛒 العروض المتاحة")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown('<div class="card"><h3>رويال كانين - قطط</h3><h2>450 ج.م</h2></div>', unsafe_allow_html=True)
+    st.markdown('<div class="card"><h3>رويال كانين قطط 2 كجم</h3><p class="price">450 ج.م</p></div>', unsafe_allow_html=True)
     with st.expander("📝 اطلب الآن"):
-        name = st.text_input("الاسم", key="name1")
-        phone = st.text_input("رقم الموبايل", key="phone1")
-        if st.button("تأكيد الحفظ", key="btn1"):
+        name = st.text_input("اسمك بالكامل", key="n1")
+        phone = st.text_input("رقم الموبايل", key="p1")
+        if st.button("تأكيد الطلب والحفظ", key="b1"):
             if name and phone:
-                if save_to_sheets(name, phone, "رويال كانين قطط"):
-                    st.success("✅ تم حفظ الطلب في جدول جوجل!")
-                    st.balloons()
+                if save_order(name, phone, "رويال كانين قطط 2 كجم"):
+                    st.success("✅ تم تسجيل طلبك في الجدول بنجاح!")
+                    st.markdown(f'<a href="https://wa.me/201022395878?text=تم تسجيل طلب رويال كانين باسم {name}" style="display:block; background:#25d366; color:white; text-align:center; padding:10px; border-radius:10px; text-decoration:none;">تواصل عبر واتساب لإتمام الشحن</a>', unsafe_allow_html=True)
             else:
-                st.warning("يرجى ملء البيانات")
+                st.warning("برجاء إدخال الاسم والرقم")
 
-# الفوتر
+with col2:
+    st.markdown('<div class="card"><h3>رمل قطط كربون 5 لتر</h3><p class="price">180 ج.م</p></div>', unsafe_allow_html=True)
+    with st.expander("📝 اطلب الآن"):
+        name2 = st.text_input("اسمك بالكامل", key="n2")
+        phone2 = st.text_input("رقم الموبايل", key="p2")
+        if st.button("تأكيد الطلب والحفظ", key="b2"):
+            if name2 and phone2:
+                if save_order(name2, phone2, "رمل قطط كربون 5 لتر"):
+                    st.success("✅ تم حفظ البيانات!")
+            else:
+                st.warning("برجاء إدخال البيانات")
+
 st.markdown("---")
-st.caption("VetFamily Alexandria - 2026")
-        f"💰 السعر: {product['price']} ج.م\n"
-        f"📦 الوحدة: {product['unit']}\n\n"
-        f"برجاء التواصل لتأكيد الطلب والتوصيل 🙏"
-    )
-
-def package_wa_msg(pkg_name, pkg_data):
-    features = "\n".join([f"✅ {f}" for f in pkg_data['features']])
-    return wa_link(
-        f"مرحباً VetFamily 🐾\n"
-        f"أود الاشتراك في:\n\n"
-        f"{pkg_data['icon']} {pkg_name}\n"
-        f"💰 السعر: {pkg_data['price']} ج.م / {pkg_data['duration']}\n\n"
-        f"المميزات:\n{features}\n\n"
-        f"برجاء التواصل لتأكيد الاشتراك 🙏"
-    )
-
-def adoption_wa_msg(pet_type=""):
-    return wa_link(
-        f"مرحباً VetFamily 🐾\n"
-        f"أود التبني 🏠\n\n"
-        f"نوع الحيوان المرغوب: {pet_type}\n\n"
-        f"برجاء التواصل لاستكمال الإجراءات 🙏"
-    )
-
-def get_badge_html(badges):
-    m = {
-        "new":("جديد","badge-new"),
-        "sale":("عرض","badge-sale"),
-        "popular":("الأكثر مبيعاً","badge-popular"),
-        "premium":("بريميوم","badge-premium"),
-        "recommended":("موصى به","badge-recommended"),
-        "vet":("موصى طبياً","badge-vet"),
-    }
-    return "".join(
-        f'<span class="product-badge {c}">{t}</span>'
-        for b in badges if b in m for t, c in [m[b]]
-    )
+st.caption("حقوق النشر © 2026 - VetFamily Alexandria")
 
 # =============================================
 # حفظ طلبات التبني (للأرشيف فقط)
